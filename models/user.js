@@ -60,12 +60,29 @@ class User {
   /** Update last_login_at for user */
 
   static async updateLoginTimestamp(username) {
+    const result = await db.query(
+      `UPDATE users
+        SET last_login_at = current_timestamp
+        WHERE username = $1
+        RETURNING username`, [username]
+    );
+
+    const user = result.rows[0];
+
+    if(!user) throw new NotFoundError(`No such user: ${username}`);
   }
 
   /** All: basic info on all users:
    * [{username, first_name, last_name}, ...] */
 
   static async all() {
+    const result = await db.query(
+      `SELECT username, first_name, last_name
+        FROM users`
+    );
+
+    return result.rows;
+
   }
 
   /** Get: get user by username
@@ -78,6 +95,17 @@ class User {
    *          last_login_at } */
 
   static async get(username) {
+    const result = await db.query(
+      `SELECT username, first_name, last_name, phone, join_at, last_login_at
+        FROM users
+        WHERE username = $1`, [username]
+    );
+
+      const user = result.rows[0];
+
+      if(!user) throw new NotFoundError(`No such user: ${username}`);
+
+      return user;
   }
 
   /** Return messages from this user.
@@ -89,6 +117,28 @@ class User {
    */
 
   static async messagesFrom(username) {
+     //throws exception if user is not found
+     await User.get(username);
+
+    const result = await db.query(
+      `SELECT m.id,
+              m.body,
+              m.sent_at,
+              m.read_at,
+              t.username,
+              t.first_name,
+              t.last_name,
+              t.phone,
+        FROM messages as m
+        JOIN users as f ON m.from_username = f.username
+        JOIN users as t ON m.to_username = t.username
+        WHERE f.username = $1`, [username]
+    );
+
+
+    const messages = result.rows;
+
+    //if (!messages) throw new NotFoundError(`No such messages for user: ${username}`);
   }
 
   /** Return messages to this user.
