@@ -60,17 +60,14 @@ class User {
     );
     const user = result.rows[0];
 
-    // throw NotFound is record doesn't exist
-    // TODO: In this case, we should not return not-found / username.
-    // TODO: And the error should ultimately be a 401
-    // TODO: We can just return false from this function and let route handle
-    if (!user) throw new NotFoundError(`No such user: ${username}`);
-
     // do bcrypt password validation and return result
     return await bcrypt.compare(password, user.password);
   }
 
-  /** Update last_login_at for user */
+  /** Update last_login_at for user
+   * Will throw NotFoundError if user is not found
+   * Returns undefined
+  */
 
   static async updateLoginTimestamp(username) {
     const result = await db.query(
@@ -98,10 +95,9 @@ class User {
 
   }
 
-  // TODO: Ideally calls out unknown user throws NotFoundError
   /** Get: get user by username
-   *
-   * returns {username,
+   * Will throw NotFoundError if user is not found
+   * Otherwise, returns {username,
    *          first_name,
    *          last_name,
    *          phone,
@@ -134,7 +130,6 @@ class User {
     //throws exception if user is not found
     await User.get(username);
 
-    // TODO: Don't need the f join (can use from_username)
     const result = await db.query(
       `SELECT m.id,
               m.body,
@@ -145,14 +140,12 @@ class User {
               t.last_name as "toLastName",
               t.phone as "toPhone"
         FROM messages as m
-        JOIN users as f ON m.from_username = f.username
         JOIN users as t ON m.to_username = t.username
-        WHERE f.username = $1`, [username]
+        WHERE m.from_username = $1`, [username]
     );
     const messages = result.rows;
 
-    // TODO: Ideally var name isn't so generic
-    const response = messages.map(message => {
+    const messagesWithUserInfo = messages.map(message => {
       // console.log("message in messages:", message);
       return {
         id: message.id,
@@ -168,7 +161,7 @@ class User {
       };
     });
 
-    return response;
+    return messagesWithUserInfo;
   }
 
   /** Return messages to this user.
@@ -193,13 +186,12 @@ class User {
               f.last_name as "fromLastName",
               f.phone as "fromPhone"
         FROM messages as m
-        JOIN users as t ON m.to_username = t.username
         JOIN users as f ON m.from_username = f.username
-        WHERE t.username = $1`, [username]
+        WHERE m.to_username = $1`, [username]
     );
     const messages = result.rows;
 
-    const response = messages.map(message => {
+    const messagesWithUserInfo = messages.map(message => {
       return {
         id: message.id,
         from_user: {
@@ -214,7 +206,7 @@ class User {
       };
     });
 
-    return response;
+    return messagesWithUserInfo;
   }
 }
 
