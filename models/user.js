@@ -28,12 +28,20 @@ class User {
 
   static async register({ username, password, first_name, last_name, phone }) {
     const hashedPassword = await bcrypt.hash(
-      password, BCRYPT_WORK_FACTOR);
+      password,
+      BCRYPT_WORK_FACTOR
+      );
 
       const result = await db.query(
       `INSERT INTO users (
-          username, password, first_name,
-          last_name, phone, join_at, last_login_at )
+          username,
+          password,
+          first_name,
+          last_name,
+          phone,
+          join_at,
+          last_login_at
+          )
         VALUES ($1, $2, $3, $4, $5, current_timestamp, current_timestamp)
         RETURNING username, password, first_name, last_name, phone`,
       [username, hashedPassword, first_name, last_name, phone]);
@@ -53,6 +61,9 @@ class User {
     const user = result.rows[0];
 
     // throw NotFound is record doesn't exist
+    // TODO: In this case, we should not return not-found / username.
+    // TODO: And the error should ultimately be a 401
+    // TODO: We can just return false from this function and let route handle
     if (!user) throw new NotFoundError(`No such user: ${username}`);
 
     // do bcrypt password validation and return result
@@ -87,6 +98,7 @@ class User {
 
   }
 
+  // TODO: Ideally calls out unknown user throws NotFoundError
   /** Get: get user by username
    *
    * returns {username,
@@ -122,6 +134,7 @@ class User {
     //throws exception if user is not found
     await User.get(username);
 
+    // TODO: Don't need the f join (can use from_username)
     const result = await db.query(
       `SELECT m.id,
               m.body,
@@ -138,6 +151,7 @@ class User {
     );
     const messages = result.rows;
 
+    // TODO: Ideally var name isn't so generic
     const response = messages.map(message => {
       // console.log("message in messages:", message);
       return {
