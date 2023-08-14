@@ -29,12 +29,14 @@ class User {
   static async register({ username, password, first_name, last_name, phone }) {
     const hashedPassword = await bcrypt.hash(
       password, BCRYPT_WORK_FACTOR);
-    const user = await db.query(
+
+      const result = await db.query(
       `INSERT INTO users (
-        username, password, first_name, last_name, phone, join_at)
-        VALUES ($1, $2, $3, $4, $5, current_timestamp)
+          username, password, first_name,
+          last_name, phone, join_at, last_login_at )
+        VALUES ($1, $2, $3, $4, $5, current_timestamp, current_timestamp)
         RETURNING username, password, first_name, last_name, phone`,
-    [username, hashedPassword, first_name, last_name, phone]);
+      [username, hashedPassword, first_name, last_name, phone]);
 
     return result.rows[0];
   }
@@ -48,13 +50,13 @@ class User {
         FROM users
         WHERE username = $1`, [username]
     );
-    // throw NotFound is record doesn't exist
     const user = result.rows[0];
 
+    // throw NotFound is record doesn't exist
     if (!user) throw new NotFoundError(`No such user: ${username}`);
 
     // do bcrypt password validation and return result
-    return await bcrypt.compare(password, user.password)
+    return await bcrypt.compare(password, user.password);
   }
 
   /** Update last_login_at for user */
@@ -69,7 +71,7 @@ class User {
 
     const user = result.rows[0];
 
-    if(!user) throw new NotFoundError(`No such user: ${username}`);
+    if (!user) throw new NotFoundError(`No such user: ${username}`);
   }
 
   /** All: basic info on all users:
@@ -101,11 +103,11 @@ class User {
         WHERE username = $1`, [username]
     );
 
-      const user = result.rows[0];
+    const user = result.rows[0];
 
-      if(!user) throw new NotFoundError(`No such user: ${username}`);
+    if (!user) throw new NotFoundError(`No such user: ${username}`);
 
-      return user;
+    return user;
   }
 
   /** Return messages from this user.
@@ -117,28 +119,42 @@ class User {
    */
 
   static async messagesFrom(username) {
-     //throws exception if user is not found
-     await User.get(username);
+    //throws exception if user is not found
+    await User.get(username);
 
     const result = await db.query(
       `SELECT m.id,
               m.body,
               m.sent_at,
               m.read_at,
-              t.username,
-              t.first_name,
-              t.last_name,
-              t.phone,
+              t.username as "toUsername",
+              t.first_name as "toFirstName",
+              t.last_name as "toLastName",
+              t.phone as "toPhone"
         FROM messages as m
         JOIN users as f ON m.from_username = f.username
         JOIN users as t ON m.to_username = t.username
         WHERE f.username = $1`, [username]
     );
-
-
     const messages = result.rows;
 
-    //if (!messages) throw new NotFoundError(`No such messages for user: ${username}`);
+    const response = messages.map(message => {
+      // console.log("message in messages:", message);
+      return {
+        id: message.id,
+        to_user: {
+          username: message.toUsername,
+          first_name: message.toFirstName,
+          last_name: message.toLastName,
+          phone: message.toPhone
+        },
+        body: message.body,
+        sent_at: message.sent_at,
+        read_at: message.read_at
+      };
+    });
+
+    return response;
   }
 
   /** Return messages to this user.
@@ -150,6 +166,41 @@ class User {
    */
 
   static async messagesTo(username) {
+    //throws exception if user is not found
+    await User.get(username);
+
+    const result = await db.query(
+      `SELECT m.id,
+              m.body,
+              m.sent_at,
+              m.read_at,
+              f.username as "fromUsername",
+              f.first_name as "fromFirstName",
+              f.last_name as "fromLastName",
+              f.phone as "fromPhone"
+        FROM messages as m
+        JOIN users as t ON m.to_username = t.username
+        JOIN users as f ON m.from_username = f.username
+        WHERE t.username = $1`, [username]
+    );
+    const messages = result.rows;
+
+    const response = messages.map(message => {
+      return {
+        id: message.id,
+        from_user: {
+          username: message.fromUsername,
+          first_name: message.fromFirstName,
+          last_name: message.fromLastName,
+          phone: message.fromPhone
+        },
+        body: message.body,
+        sent_at: message.sent_at,
+        read_at: message.read_at
+      };
+    });
+
+    return response;
   }
 }
 
