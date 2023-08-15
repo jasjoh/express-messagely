@@ -44,6 +44,12 @@ router.get("/:username", ensureCorrectUser, async function (req, res, next) {
  *
  **/
 
+router.get("/:username/to", ensureCorrectUser, async function(req, res, next){
+  const messages = await User.messagesTo(req.params.username);
+
+  return res.json({ messages });
+
+})
 
 /** GET /:username/from - get messages from user
  *
@@ -54,5 +60,12 @@ router.get("/:username", ensureCorrectUser, async function (req, res, next) {
  *                 to_user: {username, first_name, last_name, phone}}, ...]}
  *
  **/
+
+router.get("/:username/from", ensureCorrectUser, async function(req, res, next){
+  const messages = await User.messagesFrom(req.params.username);
+
+  return res.json({ messages });
+
+})
 
 module.exports = router;
