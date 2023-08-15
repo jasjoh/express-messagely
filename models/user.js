@@ -60,6 +60,8 @@ class User {
     );
     const user = result.rows[0];
 
+    if(user === undefined) return false;
+
     // do bcrypt password validation and return result
     return await bcrypt.compare(password, user.password);
   }

@@ -3,7 +3,12 @@
 const Router = require("express").Router;
 const router = new Router();
 
-const { ensureLoggedIn, ensureCorrectUser } = require("../middleware/auth");
+const {
+  ensureLoggedIn,
+  ensureCorrectUser,
+  ensureAssociatedUser,
+  ensureRecipient
+} = require("../middleware/auth");
 
 const Message = require("../models/message");
 
@@ -20,6 +25,10 @@ const Message = require("../models/message");
  *
  **/
 
+router.get("/:id", ensureAssociatedUser, async function (req, res, next) {
+  const message = await Message.get(req.params.id);
+  return res.json({ message });
+});
 
 /** POST / - post message.
  *
@@ -27,6 +36,18 @@ const Message = require("../models/message");
  *   {message: {id, from_username, to_username, body, sent_at}}
  *
  **/
+router.post('/', ensureLoggedIn, async function (req, res, next) {
+  if (req.body === undefined) throw new BadRequestError();
+
+  // Message.create expects: { from_username, to_username, body }
+  const { to_username, body } = req.body;
+  const from_username = res.locals.user.username;
+  const message = await Message.create(
+    { from_username, to_username, body }
+  );
+
+  return res.json({ message });
+});
 
 
 /** POST/:id/read - mark message as read:
@@ -36,6 +57,13 @@ const Message = require("../models/message");
  * Makes sure that the only the intended recipient can mark as read.
  *
  **/
+router.post('/:id/read', ensureRecipient, async function (req, res, next) {
+  // Message.create expects: { from_username, to_username, body }
+  console.log("endpoint to read message called with id:", req.params.id);
+  const message = await Message.markRead(req.params.id);
+  console.log("retrieved message on read:", message);
+  return res.json({ message });
+});
 
 
 module.exports = router;

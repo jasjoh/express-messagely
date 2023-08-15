@@ -7,6 +7,8 @@ const jwt = require("jsonwebtoken");
 const { SECRET_KEY } = require("../config");
 const { UnauthorizedError } = require("../expressError");
 
+const Message = require("../models/message");
+
 
 /** Middleware: Authenticate user. */
 
@@ -45,20 +47,39 @@ if (!currentUser || hasUnauthorizedUsername){
 
 /** Middleware: Requires user to be recipient or sender of message to access. */
 
-function
+async function ensureAssociatedUser(req, res, next) {
+  const currentUser = res.locals.user?.username;
+  const isAssociated = await Message.isUserAuthor(req.params.id, currentUser)
+    || await Message.isUserRecipient(req.params.id, currentUser);
+
+  // this is only true if either message returns literal 'true'
+  if (isAssociated !== true){
+    throw new UnauthorizedError();
+  }
+
+  return next();
+}
 
 
 /** Middleware: Requires user to be recipient of message to access. */
 
+async function ensureRecipient(req, res, next) {
+  const currentUser = res.locals.user?.username;
+  const isRecipient = await Message.isUserRecipient(req.params.id, currentUser);
 
-//req.params.id && res.locals.user => could call a function within auth that passes
-// if auth function receives False, throw error. otherwise, next.
-//models --> current user associated with message id/sender
-// models --> is current user recipient of message id
+  // this is only true if either message returns literal 'true'
+  if (isRecipient !== true){
+    throw new UnauthorizedError();
+  }
+
+  return next();
+}
 
 
 module.exports = {
   authenticateJWT,
   ensureLoggedIn,
   ensureCorrectUser,
+  ensureAssociatedUser,
+  ensureRecipient
 };

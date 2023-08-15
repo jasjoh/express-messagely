@@ -102,16 +102,17 @@ class Message {
   }
 
 
-  /** Get: grabs from_username and authenticates
-   *
-   * auth passes message id, current user
-   *
-   * query db using message id for from_username
-   *
-   * return true/false, if curruser/from_username matches
+  /**
+   * Checks if a user is the author of a message
+   * Accepts a message ID and a username
+   * Returns true if username is author of the message
+   * Throws not found error if message does not exist
    */
 
-  static async isUserAuthor(messageId, currentUser){
+  static async isUserAuthor(messageId, user){
+    if (isNaN(messageId)) {
+      throw new NotFoundError(`No such message: ${messageId}`);
+    }
     const result = await db.query(
       `SELECT from_username
         FROM messages
@@ -120,21 +121,22 @@ class Message {
 
     const messageAuthor = result.rows[0].from_username;
 
-    return messageAuthor === currentUser;
+    return messageAuthor === user;
 
   }
 
 
-    /** Get: grabs to_username and authenticates
-   *
-   * auth passes message id, current user
-   *
-   * query db using message id for to_username
-   *
-   * return true/false if curruser/to_username matches
+  /**
+   * Checks if a user is the recipient of a message
+   * Accepts a message ID and a username
+   * Returns true if username is recipient of the message
+   * Throws not found error if message does not exist
    */
 
-    static async isUserRecipient(messageId, currentUser){
+    static async isUserRecipient(messageId, user){
+      if (isNaN(messageId)) {
+        throw new NotFoundError(`No such message: ${messageId}`);
+      }
       const result = await db.query(
         `SELECT to_username
           FROM messages
@@ -143,7 +145,7 @@ class Message {
 
       const messageRecipient = result.rows[0].to_username;
 
-      return messageRecipient === currentUser;
+      return messageRecipient === user;
     }
 }
 module.exports = Message;
