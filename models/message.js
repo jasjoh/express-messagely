@@ -100,7 +100,50 @@ class Message {
       read_at: m.read_at,
     };
   }
+
+
+  /** Get: grabs from_username and authenticates
+   *
+   * auth passes message id, current user
+   *
+   * query db using message id for from_username
+   *
+   * return true/false, if curruser/from_username matches
+   */
+
+  static async isUserAuthor(messageId, currentUser){
+    const result = await db.query(
+      `SELECT from_username
+        FROM messages
+        WHERE id = $1`, [messageId]
+    );
+
+    const messageAuthor = result.rows[0].from_username;
+
+    return messageAuthor === currentUser;
+
+  }
+
+
+    /** Get: grabs to_username and authenticates
+   *
+   * auth passes message id, current user
+   *
+   * query db using message id for to_username
+   *
+   * return true/false if curruser/to_username matches
+   */
+
+    static async isUserRecipient(messageId, currentUser){
+      const result = await db.query(
+        `SELECT to_username
+          FROM messages
+          WHERE id = $1`, [messageId]
+      );
+
+      const messageRecipient = result.rows[0].to_username;
+
+      return messageRecipient === currentUser;
+    }
 }
-
-
 module.exports = Message;

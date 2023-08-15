@@ -38,10 +38,23 @@ function ensureCorrectUser(req, res, next) {
 
 if (!currentUser || hasUnauthorizedUsername){
   throw new UnauthorizedError();
-} 
+}
 
   return next();
 }
+
+/** Middleware: Requires user to be recipient or sender of message to access. */
+
+function
+
+
+/** Middleware: Requires user to be recipient of message to access. */
+
+
+//req.params.id && res.locals.user => could call a function within auth that passes
+// if auth function receives False, throw error. otherwise, next.
+//models --> current user associated with message id/sender
+// models --> is current user recipient of message id
 
 
 module.exports = {

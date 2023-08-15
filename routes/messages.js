@@ -3,6 +3,10 @@
 const Router = require("express").Router;
 const router = new Router();
 
+const { ensureLoggedIn, ensureCorrectUser } = require("../middleware/auth");
+
+const Message = require("../models/message");
+
 /** GET /:id - get detail of message.
  *
  * => {message: {id,
