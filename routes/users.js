@@ -3,12 +3,22 @@
 const Router = require("express").Router;
 const router = new Router();
 
+const { ensureLoggedIn, ensureCorrectUser } = require("../middleware/auth");
+
+const { BadRequestError, UnauthorizedError } = require("../expressError");
+const User = require("../models/user");
+
 
 /** GET / - get list of users.
  *
  * => {users: [{username, first_name, last_name}, ...]}
  *
  **/
+router.get("/", ensureLoggedIn, async function (req, res, next) {
+  const users = await User.all();
+  console.log("users inside /users/:", users);
+  return res.json({ users });
+});
 
 
 /** GET /:username - get detail of users.
@@ -16,6 +26,12 @@ const router = new Router();
  * => {user: {username, first_name, last_name, phone, join_at, last_login_at}}
  *
  **/
+router.get("/:username", ensureCorrectUser, async function (req, res, next) {
+  const user = await User.get(req.params.username);
+  console.log("user found /users/username:", user);
+  return res.json({ user });
+});
+
 
 
 /** GET /:username/to - get messages to user
