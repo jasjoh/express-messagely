@@ -15,7 +15,8 @@ router.post("/login", async function (req, res, next) {
 
   const authenticated = await User.authenticate(username, password);
 
-  if (authenticated) {
+  // TODO: Should reverse the order here (fail case first)
+  if (authenticated === true) {
     const token = jwt.sign({ username }, SECRET_KEY);
     return res.json({ token });
   }
@@ -38,7 +39,7 @@ router.post("/register", async function (req, res, next) {
     phone
   } = req.body;
 
-  await User.register({
+  const user = await User.register({
     username,
     password,
     first_name,
@@ -46,7 +47,7 @@ router.post("/register", async function (req, res, next) {
     phone
   });
 
-  const token = jwt.sign({ username }, SECRET_KEY);
+  const token = jwt.sign({ user.username }, SECRET_KEY);
 
   return res.json({ token });
 });

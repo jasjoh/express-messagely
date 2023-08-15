@@ -2,7 +2,7 @@
 
 /** Message class for message.ly */
 
-const { NotFoundError } = require("../expressError");
+const { NotFoundError, BadRequestError } = require("../expressError");
 const db = require("../db");
 
 /** Message on the site. */
@@ -111,7 +111,7 @@ class Message {
 
   static async isUserAuthor(messageId, user){
     if (isNaN(messageId)) {
-      throw new NotFoundError(`No such message: ${messageId}`);
+      throw new BadRequestError();
     }
     const result = await db.query(
       `SELECT from_username
@@ -129,13 +129,13 @@ class Message {
   /**
    * Checks if a user is the recipient of a message
    * Accepts a message ID and a username
-   * Returns true if username is recipient of the message
+   * Returns true if username is recipient of the messagev
    * Throws not found error if message does not exist
    */
 
     static async isUserRecipient(messageId, user){
       if (isNaN(messageId)) {
-        throw new NotFoundError(`No such message: ${messageId}`);
+        throw new BadRequestError();
       }
       const result = await db.query(
         `SELECT to_username

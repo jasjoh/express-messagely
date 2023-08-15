@@ -8,6 +8,7 @@ const { ensureLoggedIn, ensureCorrectUser } = require("../middleware/auth");
 const User = require("../models/user");
 
 
+// TODO: Should include middleware dependency usage in route doc strings
 /** GET / - get list of users.
  *
  * => {users: [{username, first_name, last_name}, ...]}

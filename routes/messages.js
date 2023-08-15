@@ -5,7 +5,6 @@ const router = new Router();
 
 const {
   ensureLoggedIn,
-  ensureCorrectUser,
   ensureAssociatedUser,
   ensureRecipient
 } = require("../middleware/auth");
@@ -57,6 +56,7 @@ router.post('/', ensureLoggedIn, async function (req, res, next) {
  * Makes sure that the only the intended recipient can mark as read.
  *
  **/
+// TODO: We could also have ensureLoggedIn middleware
 router.post('/:id/read', ensureRecipient, async function (req, res, next) {
   // Message.create expects: { from_username, to_username, body }
   console.log("endpoint to read message called with id:", req.params.id);
